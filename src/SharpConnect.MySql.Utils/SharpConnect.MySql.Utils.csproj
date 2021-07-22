@@ -37,10 +37,6 @@
     <Compile Include="DbInformation\MySqlInformation.cs" />
     <Compile Include="DbInformation\MySqlInformation.SyncPatt.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SqlLang\MySqlParser.cs" />
-    <Compile Include="SqlLang\MySqlSyntaxTree.cs" />
-    <Compile Include="SqlLang\MySqlSyntaxTree_Tables.cs" />
-    <Compile Include="SqlLang\Tokens_and_Lexer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\SharpConnect.Data\src\SharpConnect.Data\SharpConnect.Data.csproj">

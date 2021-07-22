@@ -37,7 +37,7 @@ namespace SharpConnect.MySql.Information
         public List<MySqlStoreProcInfo> StoreProcs { get; set; }
         public List<MySqlStoreFuncInfo> StoreFuncs { get; set; }
         public MySqlDbServerInfo OwnerDbServer { get; set; }
-        public string Sql { get; set; }
+        public string Sql { get; set; }//?
 #if DEBUG
         public override string ToString()
         {
@@ -93,8 +93,14 @@ namespace SharpConnect.MySql.Information
             this.Name = name;
         }
         public MySqlDatabaseInfo OwnerDatabase { get; set; }
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public string Sql { get; set; }
+#if DEBUG
+        public override string ToString()
+        {
+            return "proc:" + Name;
+        }
+#endif
     }
     public class MySqlStoreFuncInfo
     {
@@ -104,8 +110,14 @@ namespace SharpConnect.MySql.Information
             this.Name = name;
         }
         public MySqlDatabaseInfo OwnerDatabase { get; set; }
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public string Sql { get; set; }
+#if DEBUG
+        public override string ToString()
+        {
+            return "func:" + Name;
+        }
+#endif
     }
 
 }
