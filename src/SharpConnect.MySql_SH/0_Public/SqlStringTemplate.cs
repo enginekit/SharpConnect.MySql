@@ -63,10 +63,10 @@ namespace SharpConnect.MySql
     using SharpConnect.MySql.Internal;
     public class SqlStringTemplate
     {
-        List<SqlSection> _sqlSections = new List<SqlSection>(); //all sections 
-        List<SqlBoundSection> _valuesKeys = new List<SqlBoundSection>(); //only value keys        
-        List<SqlSection> _specialKeys = new List<SqlSection>();
-        string _userRawSql; //raw sql from user code
+        readonly List<SqlSection> _sqlSections = new List<SqlSection>(); //all sections 
+        readonly List<SqlBoundSection> _valuesKeys = new List<SqlBoundSection>(); //only value keys        
+        readonly List<SqlSection> _specialKeys = new List<SqlSection>();
+        readonly string _userRawSql; //raw sql from user code
         public SqlStringTemplate(string rawSql, bool at_sign_is_binder = true)
         {
             _userRawSql = rawSql;
