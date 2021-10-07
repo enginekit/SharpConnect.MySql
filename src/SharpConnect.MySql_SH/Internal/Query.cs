@@ -69,8 +69,13 @@ namespace SharpConnect.MySql.Internal
         }
         internal Query(Connection conn, SqlStringTemplate sql, CommandParams cmdParams)
         {
-            //*** query use conn resource such as parser,writer
-            //so 1 query 1 connection      
+            //***a query uses conn resource such as parser,writer
+            //so 1 query=> 1 connection
+            if (sql == null)
+            {
+                throw new Exception("Sql command can not null.");
+            }
+
             Query bindingQuery = conn.BindingQuery;
             if (bindingQuery != null)
             {
@@ -83,11 +88,6 @@ namespace SharpConnect.MySql.Internal
             }
             //--------------------------------------------------------------
             conn.BindingQuery = this;
-            //--------------------------------------------------------------
-            if (sql == null)
-            {
-                throw new Exception("Sql command can not null.");
-            }
             //--------------------------------------------------------------
             _conn = conn;
             _cmdParams = cmdParams;
@@ -106,13 +106,14 @@ namespace SharpConnect.MySql.Internal
             if (_queryUsedMode == QueryUseMode.ExecNonQuery || _queryUsedMode == QueryUseMode.Prepare)
             {
                 this.Close();
-                _conn.BindingQuery = null;
+                //_conn.BindingQuery = null;
+                //_conn = null;
                 return true;
             }
             return false;
         }
 
-        public bool WaitingTerminated => _conn.WaitingTerminated;
+        public bool WaitingTerminated => (_conn == null) ? false : _conn.WaitingTerminated;
         public int LockWaitingMilliseconds => _conn.LockWaitingMilliseconds;
         public ErrPacket Error { get; private set; }
         public OkPacket OkPacket { get; private set; }
@@ -191,9 +192,20 @@ namespace SharpConnect.MySql.Internal
                     ExecutePrepareQuery_A(nextAction);
                 }
                 else
-
                 {
-                    ExecuteNonPrepare_A(nextAction);
+                    if (!execReader)
+                    {
+                        //execute non query, 
+                        ExecuteNonPrepare_A(() =>
+                        {
+                            Close(nextAction);
+                        });
+                    }
+                    else
+                    {
+                        ExecuteNonPrepare_A(nextAction);
+                    }
+
                 }
             }
             else
@@ -213,6 +225,14 @@ namespace SharpConnect.MySql.Internal
                     //TODO: handle wait-timeout
                     _execState = QueryExecState.Terminated;
                 }
+                else
+                {
+                    if (!execReader && _prepareContext == null)
+                    {
+                        //execute non query
+                        Close(null);
+                    }
+                }
             }
         }
 
@@ -222,7 +242,6 @@ namespace SharpConnect.MySql.Internal
         /// <param name="nextAction"></param>
         public void Close(Action nextAction = null)
         {
-
 
             //-------------------------------------------------
             switch (_execState)
@@ -283,10 +302,14 @@ namespace SharpConnect.MySql.Internal
                     {
                         //handle wait timeout
                         _execState = QueryExecState.Terminated;
+                        _conn.BindingQuery = null;//release
+                        _conn = null;
                         return;
                     }
                 }
                 _execState = QueryExecState.Closed;
+                _conn.BindingQuery = null;//release
+                _conn = null;
             }
             else
             {
@@ -295,16 +318,25 @@ namespace SharpConnect.MySql.Internal
                 if (!_recvComplete)
                 {
                     _sqlParserMx.UseFlushMode(true);
+
                     MonitorWhenRecvComplete(() =>
                     {
                         _sqlParserMx.UseFlushMode(false);
                         if (_prepareContext != null)
                         {
-                            ClosePrepareStmt_A(nextAction);
+                            ClosePrepareStmt_A(() =>
+                            {
+                                _execState = QueryExecState.Closed;
+                                _conn.BindingQuery = null;//release
+                                _conn = null;
+                                nextAction();
+                            });
                         }
                         else
                         {
                             _execState = QueryExecState.Closed;
+                            _conn.BindingQuery = null;//release
+                            _conn = null;
                             nextAction();
                         }
 
@@ -314,11 +346,19 @@ namespace SharpConnect.MySql.Internal
                 {
                     if (_prepareContext != null)
                     {
-                        ClosePrepareStmt_A(nextAction);
+                        ClosePrepareStmt_A(() =>
+                        {
+                            _execState = QueryExecState.Closed;
+                            _conn.BindingQuery = null;//release
+                            _conn = null;
+                            nextAction();
+                        });
                     }
                     else
                     {
                         _execState = QueryExecState.Closed;
+                        _conn.BindingQuery = null;//release
+                        _conn = null;
                         nextAction();
                     }
                 }
@@ -443,8 +483,7 @@ namespace SharpConnect.MySql.Internal
 
                 _conn.StartSend(() =>
                 {
-                    //when send complete then start recv result 
-
+                    //when send complete then start recv result
                     RecvPacket_A(nextAction);
                 });
             }
@@ -492,7 +531,7 @@ namespace SharpConnect.MySql.Internal
                 _sqlParserMx.UseResultParser();
                 _writer.Reset();
                 _execState = QueryExecState.Closed;
-
+                //
                 ComStmtClosePacket.Write(_writer, _prepareContext.statementId);
                 //when close, not wait for recv
                 SendPacket_A(_writer.ToArray(), nextAction);

@@ -16,6 +16,7 @@ namespace MySqlTest
             //open ,cnang db sync, close
             var connStr = GetMySqlConnString();
             var conn = new MySqlConnection(connStr);
+            
             await conn.OpenAsync();
             await conn.ChangeDbAsync("mysql");
             await conn.CloseAsync();

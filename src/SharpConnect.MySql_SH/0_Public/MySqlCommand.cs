@@ -13,6 +13,10 @@ namespace SharpConnect.MySql
             {
                 cmd.InternalPrepare();
             }
+            public static void ClosePrepare(this MySqlCommand cmd)
+            {
+                cmd.InternalClosePrepare();
+            }
             public static MySqlDataReader ExecuteReader(this MySqlCommand cmd)
             {
                 return cmd.InternalExecuteReader();
@@ -69,6 +73,10 @@ namespace SharpConnect.MySql
             public static void Prepare(this MySqlCommand cmd, Action nextAction)
             {
                 cmd.InternalPrepare(nextAction);
+            }
+            public static void ClosePrepare(this MySqlCommand cmd, Action nextAction)
+            {
+                cmd.InternalClosePrepare(nextAction);
             }
             public static void ExecuteReader(this MySqlCommand cmd, Action<MySqlDataReader> eachRow)
             {
@@ -199,6 +207,17 @@ namespace SharpConnect.MySql
             });
             _query.Prepare(nextAction);
         }
+        internal void InternalClosePrepare(Action nextAction = null)
+        {
+            if (_isPreparedStmt)
+            {
+                _query.Close(nextAction);
+            }
+            else
+            {
+
+            }
+        }
         /// <summary>
         /// sync execute reader
         /// </summary>
@@ -209,6 +228,7 @@ namespace SharpConnect.MySql
             {
                 _query = new Query(this.Connection.Conn, _sqlStringTemplate, Parameters);
             }
+
             var reader = new MySqlQueryDataReader(_query);
             reader.StringConverter = this.StringConverter;
             _query.Execute(true, null);

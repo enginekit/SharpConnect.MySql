@@ -29,7 +29,7 @@ namespace SharpConnect.MySql.AsyncPatt
             cmd.Prepare(() => tcs.SetResult(0));
             return tcs.Task;
         }
-     
+
 
         public static Task ExecuteNonQueryAsync(this MySqlCommand cmd)
         {
@@ -54,6 +54,7 @@ namespace SharpConnect.MySql.AsyncPatt
                 //then read
                 //reader.InternalRead() may be blocked, 
                 //so we use thread pool to notify 
+
                 System.Threading.ThreadPool.QueueUserWorkItem(state =>
                 {
                     while (exec_reader.InternalRead())
@@ -71,7 +72,6 @@ namespace SharpConnect.MySql.AsyncPatt
                     tcs.SetResult(0);
                     //
                 });
-
             });
             return tcs.Task;
         }

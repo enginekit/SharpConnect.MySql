@@ -21,10 +21,17 @@ namespace SharpConnect.MySql.AsyncPatt
             return tcs.Task;
         }
         //------------------------------------------------------------
+
         public static Task PrepareAsync(this MySqlCommand cmd)
         {
             var tcs = new TaskCompletionSource<int>();
             cmd.Prepare(() => tcs.SetResult(0));
+            return tcs.Task;
+        }
+        public static Task ClosePrepareAsync(this MySqlCommand cmd)
+        {
+            var tcs = new TaskCompletionSource<int>();
+            cmd.ClosePrepare(() => tcs.SetResult(0));
             return tcs.Task;
         }
         public static Task<bool> PingAsync(this MySqlConnection conn)
@@ -48,7 +55,7 @@ namespace SharpConnect.MySql.AsyncPatt
         public static Task ExecuteNonQueryAsync(this MySqlCommand cmd)
         {
             var tcs = new TaskCompletionSource<int>();
-            //TODO: add/test exception handlerd
+            //TODO: add/test exception handler
             cmd.ExecuteNonQuery(() => tcs.SetResult(0));
             return tcs.Task;
         }
@@ -73,7 +80,6 @@ namespace SharpConnect.MySql.AsyncPatt
                 {
                     while (exec_reader.InternalRead())
                     {
-
                         readerDel(exec_reader);
                         if (exec_reader.StopReadingNextRow)
                         {

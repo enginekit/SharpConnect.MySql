@@ -17,14 +17,12 @@ namespace SharpConnect.MySql
 
         public static void Test1_OldVersionTest()
         {
-            string filename;
-            filename = "TestMe.png";//216,362 bytes
+            //string filename;
+            //filename = "TestMe.png";//216,362 bytes
             //filename = "Colorful.jpg";//885,264 bytes
             //filename = "TestJpg.jpg";//2,066 bytes
-            byte[] buffer;
-            buffer = File.ReadAllBytes("D:\\[]Photo\\" + filename);
-            //buffer = new byte[500500];
-            //Stream stReader = new Stream("D:\\[]Photo\\TestJpg.jpg");
+            byte[] buffer = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            //buffer = new byte[500500]; 
             //BinaryReader binaryReader = new BinaryReader(stReader);
 
             var ss = new System.Diagnostics.Stopwatch();
@@ -72,7 +70,7 @@ namespace SharpConnect.MySql
             //cmd2Values.AddValue("s2", "bar");
             //cmd2Values.AddValue("buffer1", buffer);
 
-            ConnectionConfig config = new ConnectionConfig("localhost","root", "root");
+            ConnectionConfig config = new ConnectionConfig("localhost", "root", "root");
             config.database = "test";
             //MySqlConnection sqlConn = new MySqlConnection(config.host, config.user, config.password, config.database);
             //sqlConn.UseConnectionPool = true;
@@ -214,10 +212,9 @@ namespace SharpConnect.MySql
 
         public static void Test1_Insert()
         {
-            string filename = "TestMe.png";//216,362 bytes
-            //filename = "Colorful.jpg";//885,264 bytes
-            //filename = "TestJpg.jpg";//2,066 bytes
-            byte[] buffer = File.ReadAllBytes("D:\\[]Photo\\" + filename);
+            //string filename = "TestMe.png";//216,362 bytes 
+            byte[] buffer = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
             ConnectionConfig config = new ConnectionConfig("localhost", "root", "root");
             config.database = "test";
             MySqlConnection sqlConn = new MySqlConnection(config.host, config.user, config.password, config.database);
@@ -229,6 +226,7 @@ namespace SharpConnect.MySql
             command.Parameters.SetSqlPart("??c2", "saveImagecol");
             command.Parameters.AddWithValue("?buffer1", buffer);
             command.ExecuteNonQuery();
+            sqlConn.InternalClose();
         }
 
         public static void Test1_Update()
@@ -263,6 +261,7 @@ namespace SharpConnect.MySql
             command.Parameters.SetSqlPart("??c1", "idsaveImage");
             command.Parameters.AddWithValue("?n1", testN1);
             command.Parameters.AddWithValue("?n2", testN2);
+            sqlConn.InternalClose();
         }
 
 

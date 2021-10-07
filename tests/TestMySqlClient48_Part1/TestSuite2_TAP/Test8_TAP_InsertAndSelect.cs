@@ -56,10 +56,10 @@ namespace MySqlTest
                         pars.AddWithValue("?col2", "AA");
                         pars.AddWithValue("?col3", "how are you" + i);
                         pars.AddWithValue("?col4", DateTime.Now);
-
                         await cmd.ExecuteNonQueryAsync();
                         pars.Clear();
                     }
+                    await cmd.ClosePrepareAsync();
                 }
 
 

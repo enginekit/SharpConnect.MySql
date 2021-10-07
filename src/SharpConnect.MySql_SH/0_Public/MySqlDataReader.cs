@@ -687,6 +687,19 @@ namespace SharpConnect.MySql
                 case MySqlDataType.DATE:
                 case MySqlDataType.DATETIME:
                     return _cells[colIndex].myDateTime;
+                case MySqlDataType.DECIMAL:
+                    {
+                        //empty date-time
+                        DateTime dtm = _cells[colIndex].myDateTime;
+                        if (dtm == DateTime.MinValue)
+                        {
+                            return dtm;
+                        }
+                        else
+                        {
+                            throw new NotSupportedException();
+                        }
+                    }
                 default:
                     throw new NotSupportedException();
             }

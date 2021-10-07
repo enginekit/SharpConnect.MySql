@@ -25,7 +25,7 @@ namespace MySqlTest
             var connStr = GetMySqlConnString();
             var conn2 = new MySqlConnection(connStr);
             conn2.Open();
-            conn2.ChangeDB("test"); 
+            conn2.ChangeDB("test");
 
             var cmd3 = new MySqlCommand("call blank_call()", conn2);
             var reader3 = cmd3.ExecuteReader();
@@ -188,11 +188,27 @@ namespace MySqlTest
         [Test]
         public static void T_Ping()
         {
-            var connStr = GetMySqlConnString();
-            var conn = new MySqlConnection(connStr);
-            conn.Open();
-            bool ping = conn.Ping();
-            conn.Close();
+
+            {
+                var connStr = GetMySqlConnString();
+                var conn = new MySqlConnection(connStr);
+                conn.Open();
+                bool ping = conn.Ping();
+                conn.Close();
+            }
+
+            {
+                //ping, expect err (no connection)
+
+                var connStr = GetMySqlConnString();
+                var conn = new MySqlConnection(connStr);
+                conn.Open();
+#if DEBUG
+                conn.dbugMakeSocketError();
+#endif
+                bool ping = conn.Ping();
+                conn.Close();
+            }
         }
         [Test]
         public static void T_ResetConnection()

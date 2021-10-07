@@ -261,6 +261,8 @@ namespace MySqlTest
                 cmd.Parameters.AddWithValue("?col2", "1000");
                 cmd.ExecuteNonQuery();
             }
+
+
             conn.Close();
             Report.WriteLine("ok");
         }
@@ -317,9 +319,13 @@ namespace MySqlTest
             {
                 string sql = "insert into test001(myname,col1,col2) values(?myname,?col1,?col2)";
                 var cmd = new MySqlCommand(sql, conn);
+                cmd.SetOnErrorHandler(err =>
+                {
+
+                });
                 cmd.Prepare();
                 cmd.Parameters.AddWithValue("?myname", "OKOK!");
-                cmd.Parameters.AddWithValue("?col1", "OK1"); //width =2 ,so  in MySQL 5.6 strict mode, err-> data is too long for column
+                cmd.Parameters.AddWithValue("?col1", "OK"); //width =2 ,so  in MySQL 5.6 strict mode, err-> data is too long for column
                 cmd.Parameters.AddWithValue("?col2", "1000");
                 cmd.ExecuteNonQuery();
             }

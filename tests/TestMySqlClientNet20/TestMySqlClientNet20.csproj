@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET20</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -41,7 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="TestSuite_BasicTasks\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\SharpConnect.MySql.Net20\SharpConnect.MySql.csproj">
@@ -94,6 +93,7 @@
     <Compile Include="..\TestMySqlClient48_Part1\TestSuite\TestSuite.cs">
       <Link>TestSuite\TestSuite.cs</Link>
     </Compile>
+    <Compile Include="TestAction_Chaining.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TestMySqlClient48_Part1\Form1.resx">

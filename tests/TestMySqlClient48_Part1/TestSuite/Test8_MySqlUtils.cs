@@ -114,55 +114,7 @@ namespace MySqlTest
             conn.Close();
         }
 
-        [Test]
-        public static void T_CreateDatabaseInfo_SqlTableToCsMapperCodeGen()
-        {
-            var connStr = GetMySqlConnString();
-            var conn = new MySqlConnection(connStr);
-            conn.Open();
-
-            var serverInfo = new MySqlDbServerInfo("test");
-            serverInfo.ReloadDatabaseList(conn);
-
-            var csCodeGen = new SharpConnect.MySql.SqlLang.MySqlInfoToCsCodeGenerator();
-
-            StringBuilder outputStBulder = new StringBuilder();
-            foreach (MySqlDatabaseInfo db in serverInfo.Databases.Values)
-            {
-                db.ReloadTableList(conn, true);
-                foreach (MySqlTableInfo tbl in db.Tables)
-                {
-                    //just test
-                    if (tbl.Name == "test001")
-                    {
-                        //
-                        string createSql = "";
-                        string sql = "SHOW CREATE TABLE " + db.Name + "." + tbl.Name;
-                        var cmd = new MySqlCommand(sql, conn);
-                        var reader = cmd.ExecuteReader();
-                        if (reader.Read())
-                        {
-                            createSql = reader.GetString(1);
-                        }
-                        reader.Close();
-                        //-----------------------
-                        if (createSql != "")
-                        {
-                            var parser = new SharpConnect.MySql.SqlLang.MySqlParser();
-                            parser.ParseSql(createSql);
-                            if (parser.ResultTables.Count > 1)
-                            {
-                                csCodeGen.GenerateCsCode(parser.ResultTables[0], outputStBulder);
-                            }
-                        }
-
-                    }
-                }
-            }
-            //-------------------- 
-
-            conn.Close();
-        }
+       
     }
 }
 #endif

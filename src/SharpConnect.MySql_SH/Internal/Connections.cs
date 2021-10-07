@@ -166,6 +166,9 @@ namespace SharpConnect.MySql.Internal
                 _socket = null;
             }
         }
+        /// <summary>
+        /// get low-level _socket.Connected state
+        /// </summary>
         public ConnectionState State => _socket.Connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 
         public WorkingState WorkingState
@@ -310,8 +313,9 @@ namespace SharpConnect.MySql.Internal
 
         //TODO: review here
         int _globalWaiting = 0;
-        object _connLocker = new object();
+        readonly object _connLocker = new object();
 
+        
         public void InitWait()
         {
             if (Interlocked.CompareExchange(ref _globalWaiting, 1, 0) == 1)
@@ -355,8 +359,8 @@ namespace SharpConnect.MySql.Internal
         {
 
             //ref: http://www.albahari.com/threading/part4.aspx#_Signaling_with_Wait_and_Pulse
-            lock (_connLocker)                 // Let's now wake up the thread by
-            {                              // setting _go=true and pulsing.
+            lock (_connLocker)                 // Let's now wake up the thread
+            {                             
                 Interlocked.Exchange(ref _globalWaiting, 0);//set to false
                 Monitor.Pulse(_connLocker);
             }
@@ -458,7 +462,9 @@ namespace SharpConnect.MySql.Internal
             }
         }
 
+
         bool _latestCallIsOk;
+        bool _latestSocketCheckError;
         internal bool LatestCallIsOk => _latestCallIsOk;
 
         /// <summary>
@@ -468,21 +474,24 @@ namespace SharpConnect.MySql.Internal
         public void Ping(Action nextAction = null)
         {
             //ping server
-
-
             if (State == ConnectionState.Disconnected)
             {
-                throw new NotSupportedException("open connection first");
+                _latestSocketCheckError = true;//socket error
+                _latestCallIsOk = false;
+                return;
+                //throw new NotSupportedException("open connection first");
             }
 
 
             _writer.Reset();
+
             ComPingPacket pingPacket = new ComPingPacket(new PacketHeader());
             pingPacket.WritePacket(_writer);
             byte[] data = _writer.ToArray();
             InitWait();
 
             _latestCallIsOk = false;
+
             StartSend(data, 0, data.Length, () =>
             {
                 StartReceive(mysql_result2 =>
@@ -525,10 +534,11 @@ namespace SharpConnect.MySql.Internal
         /// <param name="nextAction"></param>
         public void ChangeDB(string newDbName, Action nextAction = null)
         {
-            //ping server
             if (State == ConnectionState.Disconnected)
             {
-                throw new NotSupportedException("open connection first");
+                _latestCallIsOk = false;
+                return;
+                //throw new NotSupportedException("open connection first");
             }
 
             _writer.Reset();
@@ -634,6 +644,7 @@ namespace SharpConnect.MySql.Internal
 
         }
 
+        internal bool GetLatestSocketCheckError() => _latestSocketCheckError;
 
         /// <summary>
         /// close conncetion, +/- blocking
@@ -646,20 +657,25 @@ namespace SharpConnect.MySql.Internal
                 return;
             }
 
-
-            _writer.Reset();
-            ComQuitPacket quitPacket = new ComQuitPacket(new PacketHeader());
-            quitPacket.WritePacket(_writer);
-            byte[] data = _writer.ToArray();
-            //-------------------------------------
-            InitWait();
-            StartSend(data, 0, data.Length, () =>
+            if (!_latestSocketCheckError)
             {
-                _socket.Shutdown(SocketShutdown.Both);
-                _workingState = WorkingState.Disconnected;
-                UnWait();
-                nextAction?.Invoke();
-            });
+                //found error on the connection soket
+                _writer.Reset();
+                ComQuitPacket quitPacket = new ComQuitPacket(new PacketHeader());
+                quitPacket.WritePacket(_writer);
+                byte[] data = _writer.ToArray();
+                //-------------------------------------
+                InitWait();
+                StartSend(data, 0, data.Length, () =>
+                {
+                    _socket.Shutdown(SocketShutdown.Both);
+                    _workingState = WorkingState.Disconnected;
+                    UnWait();
+                    nextAction?.Invoke();
+                });
+            }
+
+
 
             if (nextAction == null)
             {
@@ -801,6 +817,13 @@ namespace SharpConnect.MySql.Internal
             return result;
         }
 #if DEBUG
+        /// <summary>
+        /// simulate socket close, for dbug Mode only
+        /// </summary>
+        internal void dbugMakeSocketClose()
+        {
+            _socket.Close();
+        }
         public bool dbugPleaseBreak { get; set; }
 #endif
     }

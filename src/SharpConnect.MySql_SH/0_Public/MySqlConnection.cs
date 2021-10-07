@@ -12,6 +12,10 @@ namespace SharpConnect.MySql
             {
                 conn.InternalOpen();
             }
+            public static void Close(this MySqlConnection conn)
+            {
+                conn.InternalClose(null);
+            }
             public static bool Ping(this MySqlConnection conn)
             {
                 conn.InternalPing();
@@ -52,25 +56,21 @@ namespace SharpConnect.MySql
         public static partial class MySqlAsyncPattExtension
         {
 
-            public static void Open(this MySqlConnection conn, Action onComplete, Action next = null)
+            public static void Open(this MySqlConnection conn, Action onComplete)
             {
                 conn.InternalOpen(onComplete);
-                next?.Invoke();
             }
-            public static void Ping(this MySqlConnection conn, Action onComplete, Action next = null)
+            public static void Ping(this MySqlConnection conn, Action onComplete)
             {
                 conn.InternalPing(onComplete);
-                next?.Invoke();
             }
-            public static void ChangeDB(this MySqlConnection conn, string newDbName, Action onComplete, Action next = null)
+            public static void ChangeDB(this MySqlConnection conn, string newDbName, Action onComplete)
             {
                 conn.InternalChangeDB(newDbName, onComplete);
-                next?.Invoke();
             }
-            public static void ResetConnection(this MySqlConnection conn, Action onComplete, Action next = null)
+            public static void ResetConnection(this MySqlConnection conn, Action onComplete)
             {
                 conn.InternalResetConnection(onComplete);
-                next?.Invoke();
             }
             public static void Close(this MySqlConnection conn, Action onComplete)
             {
@@ -149,7 +149,7 @@ namespace SharpConnect.MySql
             switch (charset)
             {
                 //TODO add more support here
-                default: return null; 
+                default: return null;
                 case MySqlCharacterSetName.Latin1: return "latin1";
                 case MySqlCharacterSetName.Latin2: return "latin2";
                 case MySqlCharacterSetName.Ascii: return "ascii";
@@ -344,31 +344,35 @@ namespace SharpConnect.MySql
         }
 
         internal bool LatestPingResult => _conn.LatestCallIsOk;
+
         internal void InternalPing(Action onComplete = null)
         {
             _conn.Ping(onComplete);
         }
+#if DEBUG
+        internal void dbugSimulateSocketErr()
+        {
+            _conn.dbugMakeSocketClose();
+        }
+
+#endif
         internal void InternalResetConnection(Action onComplete = null)
         {
             _conn.ResetConnection(onComplete);
         }
-
         internal void InternalChangeDB(string newDbName, Action onComplete = null)
         {
             _conn.ChangeDB(newDbName, onComplete);
         }
-        public void Close()
-        {
-            this.InternalClose();
-        }
-
-
         internal void InternalClose(Action onComplete = null)
         {
             if (UseConnectionPool)
             {
-                _conn.ForceReleaseBindingQuery();
-                ConnectionPool.ReleaseConnection(_connStr, _conn);
+                if (!_conn.GetLatestSocketCheckError())
+                {
+                    _conn.ForceReleaseBindingQuery();
+                    ConnectionPool.ReleaseConnection(_connStr, _conn);                    
+                }
                 onComplete?.Invoke();
             }
             else
@@ -380,6 +384,7 @@ namespace SharpConnect.MySql
                     {
                         _conn.Dispose();
                         _conn = null;
+                        onComplete();
                     });
                 }
                 else
@@ -392,16 +397,16 @@ namespace SharpConnect.MySql
             }
         }
         internal Connection Conn => _conn;
-
         public IStringConverter StringConv { get; set; }
-
-
-
 #if DEBUG
         public bool dbugPleaseBreak
         {
             get { return _conn.dbugPleaseBreak; }
             set { _conn.dbugPleaseBreak = value; }
+        }
+        public void dbugMakeSocketError()
+        {
+            _conn.dbugMakeSocketClose();
         }
 #endif
     }
