@@ -101,15 +101,23 @@ namespace SharpConnect.MySql.Internal
         }
         bool LateClose()
         {
-            if (_execState == QueryExecState.Closed) { return true; }
-
-            if (_queryUsedMode == QueryUseMode.ExecNonQuery || _queryUsedMode == QueryUseMode.Prepare)
+            switch (_execState)
             {
-                this.Close();
-                //_conn.BindingQuery = null;
-                //_conn = null;
-                return true;
+                case QueryExecState.Closed:
+                    return true;
+                case QueryExecState.Terminated:
+                    return true;
             }
+            switch (_queryUsedMode)
+            {
+                case QueryUseMode.ExecNonQuery:
+                case QueryUseMode.Prepare:
+                    this.Close();
+                    //_conn.BindingQuery = null;
+                    //_conn = null; 
+                    return true;
+            }
+
             return false;
         }
 
